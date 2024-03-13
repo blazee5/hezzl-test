@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-type GoodRedisRepository struct {
+type GoodRepository struct {
 	rdb *redis.Client
 }
 
-func NewGoodRedisRepository(rdb *redis.Client) *GoodRedisRepository {
-	return &GoodRedisRepository{rdb: rdb}
+func NewGoodRepository(rdb *redis.Client) *GoodRepository {
+	return &GoodRepository{rdb: rdb}
 }
 
-func (repo *GoodRedisRepository) GetByIDCtx(ctx context.Context, key string) (*models.Good, error) {
+func (repo *GoodRepository) GetByIDCtx(ctx context.Context, key string) (*models.Good, error) {
 	goodBytes, err := repo.rdb.Get(ctx, "good:"+key).Bytes()
 
 	if err != nil {
@@ -32,7 +32,7 @@ func (repo *GoodRedisRepository) GetByIDCtx(ctx context.Context, key string) (*m
 	return good, nil
 }
 
-func (repo *GoodRedisRepository) SetGoodCtx(ctx context.Context, key string, seconds int, good *models.Good) error {
+func (repo *GoodRepository) SetGoodCtx(ctx context.Context, key string, seconds int, good *models.Good) error {
 	goodBytes, err := json.Marshal(good)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (repo *GoodRedisRepository) SetGoodCtx(ctx context.Context, key string, sec
 	return nil
 }
 
-func (repo *GoodRedisRepository) DeleteGoodCtx(ctx context.Context, key string) error {
+func (repo *GoodRepository) DeleteGoodCtx(ctx context.Context, key string) error {
 	if err := repo.rdb.Del(ctx, "good:"+key).Err(); err != nil {
 		return err
 	}

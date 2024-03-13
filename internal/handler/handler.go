@@ -52,6 +52,7 @@ func (s *Server) InitRoutes() *gin.Engine {
 
 	good := api.Group("/good")
 	{
+		good.GET("", s.GetGoodByID)
 		good.POST("/create", s.CreateGood)
 		good.PATCH("/update", s.UpdateGood)
 		good.DELETE("/remove", s.DeleteGood)

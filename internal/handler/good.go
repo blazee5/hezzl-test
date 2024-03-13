@@ -160,6 +160,37 @@ func (s *Server) GetGoods(c *gin.Context) {
 	c.JSON(http.StatusOK, goodsList)
 }
 
+func (s *Server) GetGoodByID(c *gin.Context) {
+	projectID, err := strconv.Atoi(c.Query("projectId"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid project id",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(c.Query("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid id",
+		})
+		return
+	}
+
+	good, err := s.services.Good.GetGoodByID(c.Request.Context(), projectID, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, good)
+}
+
 func (s *Server) ReprioritizeGood(c *gin.Context) {
 	var input domain.ReprioritizeRequest
 

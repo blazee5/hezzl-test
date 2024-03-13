@@ -15,6 +15,7 @@ type Service struct {
 
 type Good interface {
 	GetGoods(ctx context.Context, limit, offset int) (domain.GoodList, error)
+	GetGoodByID(ctx context.Context, projectID, id int) (models.Good, error)
 	CreateGood(ctx context.Context, projectID int, input domain.CreateGoodRequest) (models.Good, error)
 	UpdateGood(ctx context.Context, projectID, id int, input domain.UpdateGoodRequest) (models.Good, error)
 	ReprioritizeGood(ctx context.Context, projectID, id int, input domain.ReprioritizeRequest) (models.GoodPriorities, error)

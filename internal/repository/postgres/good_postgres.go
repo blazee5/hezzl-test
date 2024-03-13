@@ -24,7 +24,7 @@ func (repo *GoodRepository) Get(ctx context.Context, limit, offset int) (domain.
 		return domain.GoodList{}, err
 	}
 
-	Goods, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Good])
+	goods, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Good])
 
 	if err != nil {
 		return domain.GoodList{}, err
@@ -40,13 +40,25 @@ func (repo *GoodRepository) Get(ctx context.Context, limit, offset int) (domain.
 
 	return domain.GoodList{
 		Meta: domain.Meta{
-			Total:   len(Goods),
+			Total:   len(goods),
 			Removed: removedCount,
 			Limit:   limit,
 			Offset:  offset,
 		},
-		Goods: Goods,
+		Goods: goods,
 	}, nil
+}
+
+func (repo *GoodRepository) GetByID(ctx context.Context, projectId, id int) (models.Good, error) {
+	rows, err := repo.db.Query(ctx, `SELECT id, project_id, name, description, priority, removed, created_at FROM goods WHERE id = $1 AND project_id = $2`, id, projectId)
+
+	if err != nil {
+		return models.Good{}, err
+	}
+
+	good, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Good])
+
+	return good, nil
 }
 
 func (repo *GoodRepository) Create(ctx context.Context, projectID int, input domain.CreateGoodRequest) (models.Good, error) {

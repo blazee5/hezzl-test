@@ -7,6 +7,7 @@ import (
 	"github.com/blazee5/hezzl-test/internal/models"
 	"github.com/blazee5/hezzl-test/internal/repository"
 	"go.uber.org/zap"
+	"strconv"
 )
 
 type GoodService struct {
@@ -23,18 +24,74 @@ func (s *GoodService) GetGoods(ctx context.Context, limit, offset int) (domain.G
 	return s.repo.Good.Get(ctx, limit, offset)
 }
 
+func (s *GoodService) GetGoodByID(ctx context.Context, projectID, id int) (models.Good, error) {
+	cachedGood, err := s.repo.GoodRedis.GetByIDCtx(ctx, strconv.Itoa(id))
+
+	if err != nil {
+		s.log.Infof("cannot get good by id in redis: %v", err)
+	}
+
+	if cachedGood != nil {
+		return *cachedGood, nil
+	}
+
+	good, err := s.repo.Good.GetByID(ctx, projectID, id)
+
+	if err != nil {
+		return models.Good{}, err
+	}
+
+	if err := s.repo.GoodRedis.SetGoodCtx(ctx, strconv.Itoa(id), 60, &good); err != nil {
+		s.log.Infof("error while save good to redis: %v", err)
+	}
+
+	return good, nil
+}
+
 func (s *GoodService) CreateGood(ctx context.Context, projectID int, input domain.CreateGoodRequest) (models.Good, error) {
 	return s.repo.Good.Create(ctx, projectID, input)
 }
 
 func (s *GoodService) UpdateGood(ctx context.Context, projectID, id int, input domain.UpdateGoodRequest) (models.Good, error) {
-	return s.repo.Good.Update(ctx, projectID, id, input)
+	good, err := s.repo.Good.Update(ctx, projectID, id, input)
+
+	if err != nil {
+		return models.Good{}, err
+	}
+
+	if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(id)); err != nil {
+		s.log.Infof("error while delete good from redis: %v", err)
+	}
+
+	return good, nil
 }
 
 func (s *GoodService) ReprioritizeGood(ctx context.Context, projectID, id int, input domain.ReprioritizeRequest) (models.GoodPriorities, error) {
-	return s.repo.Good.Reprioritize(ctx, projectID, id, input)
+	goods, err := s.repo.Good.Reprioritize(ctx, projectID, id, input)
+
+	if err != nil {
+		return models.GoodPriorities{}, err
+	}
+
+	for _, good := range goods.Priorities {
+		if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(good.ID)); err != nil {
+			s.log.Infof("error while delete good from redis: %v", err)
+		}
+	}
+
+	return goods, nil
 }
 
 func (s *GoodService) DeleteGood(ctx context.Context, projectID, id int) (models.DeletedGood, error) {
-	return s.repo.Good.Delete(ctx, projectID, id)
+	good, err := s.repo.Good.Delete(ctx, projectID, id)
+
+	if err != nil {
+		return models.DeletedGood{}, err
+	}
+
+	if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(id)); err != nil {
+		s.log.Infof("error while delete good from redis: %v", err)
+	}
+
+	return good, nil
 }
