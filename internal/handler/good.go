@@ -73,7 +73,7 @@ func (s *Server) UpdateGood(c *gin.Context) {
 	good, err := s.services.Good.UpdateGood(c.Request.Context(), projectID, id, input)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"status":  3,
 			"message": "errors.good.notFound",
 			"details": gin.H{},
@@ -115,7 +115,7 @@ func (s *Server) DeleteGood(c *gin.Context) {
 	good, err := s.services.Good.DeleteGood(c.Request.Context(), projectID, id)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"status":  3,
 			"message": "errors.good.notFound",
 			"details": gin.H{},
@@ -191,7 +191,7 @@ func (s *Server) ReprioritizeGood(c *gin.Context) {
 	good, err := s.services.Good.ReprioritizeGood(c.Request.Context(), projectID, id, input)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"status":  3,
 			"message": "errors.good.notFound",
 			"details": gin.H{},
