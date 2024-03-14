@@ -6,9 +6,7 @@ import (
 	"github.com/blazee5/hezzl-test/internal/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -18,14 +16,12 @@ type Server struct {
 	log        *zap.SugaredLogger
 	cfg        *config.Config
 	httpServer *http.Server
-	db         *pgxpool.Pool
-	rdb        *redis.Client
-	nc         *nats.Conn
 	services   *service.Service
+	nc         *nats.Conn
 }
 
-func NewServer(log *zap.SugaredLogger, cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, nc *nats.Conn, services *service.Service) *Server {
-	return &Server{log: log, cfg: cfg, db: db, rdb: rdb, nc: nc, services: services}
+func NewServer(log *zap.SugaredLogger, cfg *config.Config, services *service.Service, nc *nats.Conn) *Server {
+	return &Server{log: log, cfg: cfg, services: services, nc: nc}
 }
 
 func (s *Server) Run(handler http.Handler) error {

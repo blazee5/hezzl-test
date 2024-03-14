@@ -5,19 +5,21 @@ import (
 	"github.com/blazee5/hezzl-test/internal/config"
 	"github.com/blazee5/hezzl-test/internal/domain"
 	"github.com/blazee5/hezzl-test/internal/models"
+	"github.com/blazee5/hezzl-test/internal/nats"
 	"github.com/blazee5/hezzl-test/internal/repository"
 	"go.uber.org/zap"
 	"strconv"
 )
 
 type GoodService struct {
-	cfg  *config.Config
-	log  *zap.SugaredLogger
-	repo *repository.Repository
+	cfg      *config.Config
+	log      *zap.SugaredLogger
+	repo     *repository.Repository
+	producer *nats.Producer
 }
 
-func NewGoodService(cfg *config.Config, log *zap.SugaredLogger, repo *repository.Repository) *GoodService {
-	return &GoodService{cfg: cfg, log: log, repo: repo}
+func NewGoodService(cfg *config.Config, log *zap.SugaredLogger, repo *repository.Repository, producer *nats.Producer) *GoodService {
+	return &GoodService{cfg: cfg, log: log, repo: repo, producer: producer}
 }
 
 func (s *GoodService) GetGoods(ctx context.Context, limit, offset int) (domain.GoodList, error) {
@@ -49,7 +51,15 @@ func (s *GoodService) GetGoodByID(ctx context.Context, projectID, id int) (model
 }
 
 func (s *GoodService) CreateGood(ctx context.Context, projectID int, input domain.CreateGoodRequest) (models.Good, error) {
-	return s.repo.Good.Create(ctx, projectID, input)
+	good, err := s.repo.Good.Create(ctx, projectID, input)
+
+	err = s.producer.Publish(ctx, good)
+
+	if err != nil {
+		s.log.Infof("error while send good in nats: %v", err)
+	}
+
+	return good, nil
 }
 
 func (s *GoodService) UpdateGood(ctx context.Context, projectID, id int, input domain.UpdateGoodRequest) (models.Good, error) {
@@ -61,6 +71,12 @@ func (s *GoodService) UpdateGood(ctx context.Context, projectID, id int, input d
 
 	if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(id)); err != nil {
 		s.log.Infof("error while delete good from redis: %v", err)
+	}
+
+	err = s.producer.Publish(ctx, good)
+
+	if err != nil {
+		s.log.Infof("error while send good in nats: %v", err)
 	}
 
 	return good, nil
@@ -77,6 +93,12 @@ func (s *GoodService) ReprioritizeGood(ctx context.Context, projectID, id int, i
 		if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(good.ID)); err != nil {
 			s.log.Infof("error while delete good from redis: %v", err)
 		}
+
+		err = s.producer.Publish(ctx, good)
+
+		if err != nil {
+			s.log.Infof("error while send good in nats: %v", err)
+		}
 	}
 
 	return goods, nil
@@ -91,6 +113,12 @@ func (s *GoodService) DeleteGood(ctx context.Context, projectID, id int) (models
 
 	if err = s.repo.GoodRedis.DeleteGoodCtx(ctx, strconv.Itoa(id)); err != nil {
 		s.log.Infof("error while delete good from redis: %v", err)
+	}
+
+	err = s.producer.Publish(ctx, good)
+
+	if err != nil {
+		s.log.Infof("error while send good in nats: %v", err)
 	}
 
 	return good, nil

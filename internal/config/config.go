@@ -6,11 +6,12 @@ import (
 )
 
 type Config struct {
-	Env    string `yaml:"env" env:"ENV"`
-	Server Server `yaml:"server"`
-	DB     DB     `yaml:"db"`
-	Redis  Redis  `yaml:"redis"`
-	Nats   Nats   `yaml:"nats"`
+	Env        string     `yaml:"env" env:"ENV"`
+	Server     Server     `yaml:"server"`
+	DB         DB         `yaml:"db"`
+	Redis      Redis      `yaml:"redis"`
+	Nats       Nats       `yaml:"nats"`
+	Clickhouse Clickhouse `yaml:"clickhouse"`
 }
 
 type Server struct {
@@ -33,7 +34,16 @@ type Redis struct {
 }
 
 type Nats struct {
-	Host string `yaml:"host" env:"NATS_HOST"`
+	Host         string `yaml:"host" env:"NATS_HOST"`
+	WorkersCount int    `yaml:"workers_count" env:"NATS_WORKERS_COUNT"`
+	BatchSize    int    `yaml:"batch_size" env:"NATS_BATCH_SIZE"`
+}
+
+type Clickhouse struct {
+	Host     string `yaml:"host" env:"CLICKHOUSE_HOST"`
+	Name     string `yaml:"name" env:"CLICKHOUSE_DBNAME"`
+	User     string `yaml:"user" env:"CLICKHOUSE_USER"`
+	Password string `yaml:"password" env:"CLICKHOUSE_PASSWORD"`
 }
 
 func Load() *Config {

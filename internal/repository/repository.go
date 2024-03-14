@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/blazee5/hezzl-test/internal/domain"
 	"github.com/blazee5/hezzl-test/internal/models"
+	"github.com/blazee5/hezzl-test/internal/repository/clickhouse"
 	"github.com/blazee5/hezzl-test/internal/repository/postgres"
 	redisRepo "github.com/blazee5/hezzl-test/internal/repository/redis"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,6 +15,7 @@ import (
 type Repository struct {
 	Good
 	GoodRedis
+	GoodClickhouse
 }
 
 type Good interface {
@@ -30,9 +33,14 @@ type GoodRedis interface {
 	DeleteGoodCtx(ctx context.Context, key string) error
 }
 
-func NewRepository(db *pgxpool.Pool, rdb *redis.Client) *Repository {
+type GoodClickhouse interface {
+	InsertGoods(ctx context.Context, rows []domain.Good) error
+}
+
+func NewRepository(db *pgxpool.Pool, rdb *redis.Client, clickConn driver.Conn) *Repository {
 	return &Repository{
-		Good:      postgres.NewGoodRepository(db),
-		GoodRedis: redisRepo.NewGoodRepository(rdb),
+		Good:           postgres.NewGoodRepository(db),
+		GoodRedis:      redisRepo.NewGoodRepository(rdb),
+		GoodClickhouse: clickhouse.NewGoodRepository(clickConn),
 	}
 }

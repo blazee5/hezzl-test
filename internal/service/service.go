@@ -5,6 +5,7 @@ import (
 	"github.com/blazee5/hezzl-test/internal/config"
 	"github.com/blazee5/hezzl-test/internal/domain"
 	"github.com/blazee5/hezzl-test/internal/models"
+	"github.com/blazee5/hezzl-test/internal/nats"
 	"github.com/blazee5/hezzl-test/internal/repository"
 	"go.uber.org/zap"
 )
@@ -22,6 +23,6 @@ type Good interface {
 	DeleteGood(ctx context.Context, projectID, id int) (models.DeletedGood, error)
 }
 
-func NewService(cfg *config.Config, log *zap.SugaredLogger, repo *repository.Repository) *Service {
-	return &Service{Good: NewGoodService(cfg, log, repo)}
+func NewService(cfg *config.Config, log *zap.SugaredLogger, repo *repository.Repository, producer *nats.Producer) *Service {
+	return &Service{Good: NewGoodService(cfg, log, repo, producer)}
 }
