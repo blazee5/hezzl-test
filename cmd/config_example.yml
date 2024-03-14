@@ -1,9 +1,7 @@
 env: "local"
-token_ttl: ""
 
 server:
   port: ":3000"
-  timeout: ""
 
 db:
   host: "localhost"
